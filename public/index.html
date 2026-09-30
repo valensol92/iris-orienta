@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Iris Orienta — Clínica de la Visión del Valle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<div class="envoltura">
+
+  <header class="barra">
+    <div class="marca">
+      <svg width="34" height="34" viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 24c7-11 14-16 21-16s14 5 21 16c-7 11-14 16-21 16S10 35 3 24Z"/>
+        <circle cx="24" cy="24" r="7"/>
+      </svg>
+      <span>Iris Orienta <span style="font-weight:400">· Clínica de la Visión del Valle</span></span>
+    </div>
+    <div class="ajustes">
+      <button class="ajuste" id="btnTexto" type="button"><span aria-hidden="true">A⁺</span> Letra más grande</button>
+      <button class="ajuste" id="btnContraste" type="button" aria-pressed="false"><span aria-hidden="true">◐</span> Fondo negro</button>
+      <button class="ajuste" id="btnVoz" type="button" aria-pressed="true"><span aria-hidden="true">🔊</span> Voz</button>
+    </div>
+  </header>
+
+  <!-- ============ PANTALLA 1: CÉDULA ============ -->
+  <main class="pantalla activa" id="pantallaInicio">
+    <h1>Consulte su cita</h1>
+    <p class="subtitulo">Diga o escriba el número de su cédula.</p>
+
+    <button class="boton-voz" id="btnHablar" type="button">
+      <span class="punto" aria-hidden="true"></span>
+      <span id="textoHablar">🎙️ Toque aquí y diga su número de cédula</span>
+    </button>
+    <p class="aviso-voz" id="avisoVoz"></p>
+
+    <p class="separador-voz">O escriba el número</p>
+    <input class="visor" id="visor" type="tel" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="done" maxlength="12" placeholder="Su número de cédula" aria-label="Escriba aquí su número de cédula, con el teclado del teléfono o con los botones de abajo">
+
+    <button class="boton-principal" id="btnConsultar" type="button" disabled>Ver mi cita</button>
+
+    <p class="separador-teclado">O toque los números aquí abajo</p>
+    <div class="teclado" id="teclado" role="group" aria-label="Teclado numérico">
+      <button class="tecla" type="button" data-d="1">1</button>
+      <button class="tecla" type="button" data-d="2">2</button>
+      <button class="tecla" type="button" data-d="3">3</button>
+      <button class="tecla" type="button" data-d="4">4</button>
+      <button class="tecla" type="button" data-d="5">5</button>
+      <button class="tecla" type="button" data-d="6">6</button>
+      <button class="tecla" type="button" data-d="7">7</button>
+      <button class="tecla" type="button" data-d="8">8</button>
+      <button class="tecla" type="button" data-d="9">9</button>
+      <button class="tecla borrar" type="button" id="btnBorrarTodo">Borrar todo</button>
+      <button class="tecla" type="button" data-d="0">0</button>
+      <button class="tecla borrar" type="button" id="btnBorrar" aria-label="Borrar el último número">⌫ Borrar</button>
+    </div>
+  </main>
+
+  <!-- ============ PANTALLA: CARGANDO ============ -->
+  <main class="pantalla" id="pantallaCargando">
+    <p class="cargando">Buscando su cita…</p>
+  </main>
+
+  <!-- ============ PANTALLA 2: RESULTADO ============ -->
+  <main class="pantalla" id="pantallaCita" aria-live="assertive">
+    <p class="saludo" id="saludo"></p>
+    <div class="estado" id="estado"></div>
+    <div class="hora-bloque">
+      <p class="hora-etiqueta">Su cita es a las</p>
+      <p class="hora" id="hora"></p>
+      <p class="hora-llegada" id="horaLlegada"></p>
+    </div>
+    <div id="datos"></div>
+    <section class="recomendaciones" id="recomendaciones">
+      <h2>Antes de su cita</h2>
+      <ul id="listaRecomendaciones"></ul>
+    </section>
+    <div class="acciones">
+      <button class="boton-secundario" id="btnRepetir" type="button">🔊 Escuchar otra vez</button>
+      <button class="boton-secundario" id="btnTerminar" type="button">Listo, gracias</button>
+    </div>
+    <p class="aviso-cierre" id="avisoCierre"></p>
+  </main>
+
+  <!-- ============ PANTALLA 3: NO ENCONTRADO ============ -->
+  <main class="pantalla" id="pantallaNoEncontrado" aria-live="assertive">
+    <h1>No encontramos una cita con ese número</h1>
+    <div class="mensaje-grande">
+      <p id="docNoEncontrado"></p>
+      <p>Revise el número y vuelva a intentarlo, o acérquese al mostrador de admisiones.</p>
+    </div>
+    <div class="acciones">
+      <button class="boton-secundario" id="btnReintentar" type="button">Escribir otro número</button>
+      <button class="boton-secundario" id="btnEscucharError" type="button">🔊 Escuchar otra vez</button>
+    </div>
+    <p class="aviso-cierre" id="avisoCierre2"></p>
+  </main>
+
+  <!-- ============ PANTALLA 4: SIN CONEXIÓN ============ -->
+  <main class="pantalla" id="pantallaError" aria-live="assertive">
+    <h1>No pudimos conectarnos</h1>
+    <div class="mensaje-conexion">
+      <p>En este momento no podemos consultar el sistema de citas.</p>
+      <p>Por favor acérquese al mostrador de admisiones — allí lo pueden atender directamente.</p>
+    </div>
+    <div class="acciones">
+      <button class="boton-secundario" id="btnReintentarError" type="button">Intentar de nuevo</button>
+    </div>
+  </main>
+
+  <footer class="pie">
+    <span id="fechaHoy"></span>
+  </footer>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
