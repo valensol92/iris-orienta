@@ -10,7 +10,7 @@ export const Api = (function () {
   // (Project Settings → API). La "anon key" es pública por diseño: solo
   // sirve para invocar la función, no para leer la tabla de citas directamente.
   var SUPABASE_URL = "https://iergxsachwnhufnzwmbg.supabase.co";
-  var SUPABASE_ANON_KEY = "REEMPLACE_CON_SU_ANON_KEY";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imllcmd4c2FjaHduaHVmbnp3bWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4NDIyNDcsImV4cCI6MjEwNTQxODI0N30.qK7tT44G7C_2XtkplYu2nGuARoZeFjEDcDhx7cOJqaw";
   var ENDPOINT = SUPABASE_URL + "/functions/v1/consulta-cita";
 
   // consultarCita(cedula) -> Promise<{encontrada, mensaje, datos}>
