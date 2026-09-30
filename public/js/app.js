@@ -137,28 +137,13 @@ import { Api } from "./api.js";
   function pintarCita(resp) {
     var d = resp.datos;
     var h = formato12(d.hora);
-    $("saludo").innerHTML = "Buen día, " + d.nombre + "<span>Cédula " + d.doc + "</span>";
-
-    var estadoTextos = {
-      con_tiempo: "Llegó con tiempo.",
-      es_su_turno: "Es su turno. Pase a la sala de espera.",
-      ya_paso: "Su hora ya pasó. Acérquese al mostrador.",
-      es_otro_dia: "Su cita es otro día, no hoy.",
-      ya_paso_hace_dias: "Esta cita ya pasó. Consulte en el mostrador si necesita una nueva.",
-    };
-    var estadoEl = $("estado");
-    estadoEl.className = "estado" + (d.estado === "con_tiempo" || d.estado === "es_otro_dia" ? " espera" : d.estado === "ya_paso" || d.estado === "ya_paso_hace_dias" ? " tarde" : "");
-    estadoEl.textContent = estadoTextos[d.estado] || "";
-
+    $("saludo").innerHTML = "Confirmamos su documento<span>Cédula " + d.cedula + "</span>";
+    $("fechaCx").textContent = d.fechaTexto;
     $("hora").innerHTML = h.texto + " <small>" + h.sufijo + "</small>";
-    $("horaLlegada").textContent = d.fecha ? ("Fecha: " + d.fecha + ". Le pedimos llegar desde las " + formato12(d.horaLlegadaRecomendada).texto + ".") : "";
-
     $("datos").innerHTML =
-      fila("Su cita es para", d.tipo) +
-      fila("Lo atiende", d.profesional) +
-      fila("Vaya a", "Piso " + d.piso + ", consultorio " + d.consultorio, d.sede);
-
-    $("listaRecomendaciones").innerHTML = (d.recomendaciones || []).map(function (p) { return "<li>" + p + "</li>"; }).join("");
+      fila("Tipo de cirugía", d.tipo) +
+      fila("Cirujano asignado", d.cirujano) +
+      fila("Sede", d.sede);
 
     mostrar("pantallaCita");
     hablar(resp.mensaje);

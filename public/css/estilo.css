@@ -186,7 +186,7 @@ h1{
 
 /* ---------- resultado ---------- */
 .saludo{font-size:1.25em;font-weight:700;margin:0 0 .15em}
-.saludo span{display:block;font-size:.55em;font-weight:400;color:var(--tinta-suave)}
+.saludo span{display:block;font-size:1.3em;font-weight:700;letter-spacing:.04em;color:var(--tinta)}
 
 .estado{
   margin:1rem 0;

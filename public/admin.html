@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cargar agenda — Iris Orienta</title>
+<style>
+  :root { --fondo:#f6f7f9; --tarjeta:#fff; --texto:#1b1f24; --suave:#5b6470; --borde:#d8dde3; --marca:#0b5cab; --ok:#17603a; --error:#a3221b; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:17px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--fondo); color:var(--texto); padding:24px 16px; }
+  main { max-width:760px; margin:0 auto; }
+  h1 { font-size:1.5rem; margin:0 0 4px; }
+  p.sub { color:var(--suave); margin:0 0 20px; }
+  section { background:var(--tarjeta); border:1px solid var(--borde); border-radius:12px; padding:20px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin:12px 0 4px; }
+  input[type=email], input[type=password], input[type=file] { width:100%; padding:10px 12px; font:inherit; border:1px solid var(--borde); border-radius:8px; background:#fff; color:inherit; }
+  button { font:inherit; font-weight:600; padding:10px 18px; border:0; border-radius:8px; background:var(--marca); color:#fff; cursor:pointer; margin-top:14px; }
+  button.sec { background:transparent; color:var(--marca); border:1px solid var(--marca); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .msg { margin-top:12px; padding:10px 12px; border-radius:8px; }
+  .msg.ok { background:#e4f4ea; color:var(--ok); } .msg.error { background:#fbe7e5; color:var(--error); } .msg.info { background:#e8f0fa; color:var(--marca); }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; margin-top:10px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--borde); }
+  th { color:var(--suave); font-weight:600; }
+  .oculto { display:none; }
+  .fila { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  small { color:var(--suave); }
+  @media (prefers-color-scheme: dark) { :root { --fondo:#12161b; --tarjeta:#1b2129; --texto:#e8ebef; --suave:#9aa5b1; --borde:#2f3843; --marca:#5aa2ee; } button { color:#0b1520; } input { background:#12161b !important; } .msg.ok{background:#153524;color:#7fd6a1} .msg.error{background:#3c1a18;color:#ff9f98} .msg.info{background:#16283b;color:#8fc1f5} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Cargar agenda de cirugías</h1>
+  <p class="sub">Suba el Excel del día. Se actualizan las cirugías del archivo y se borra lo que lleve más de 7 días cargado.</p>
+
+  <section id="paso1">
+    <div class="fila"><strong>1. Iniciar sesión</strong><small id="quien"></small></div>
+    <form id="formLogin">
+      <label for="correo">Correo</label>
+      <input id="correo" type="email" autocomplete="username" required>
+      <label for="clave">Contraseña</label>
+      <input id="clave" type="password" autocomplete="current-password" required>
+      <button type="submit">Entrar</button>
+    </form>
+    <div id="sesion" class="oculto"><button type="button" class="sec" id="btnSalir">Cerrar sesión</button></div>
+    <div id="msgLogin"></div>
+  </section>
+
+  <section id="paso2" class="oculto">
+    <strong>2. Elegir el archivo Excel</strong>
+    <label for="archivo">Archivo .xlsx</label>
+    <input id="archivo" type="file" accept=".xlsx,.xls">
+    <div id="msgArchivo"></div>
+    <div id="vista" class="oculto">
+      <table>
+        <thead><tr><th>Cédula</th><th>Fecha</th><th>Hora</th><th>Cirugía</th><th>Cirujano</th></tr></thead>
+        <tbody id="cuerpo"></tbody>
+      </table>
+      <small id="pie"></small><br>
+      <button id="btnSubir" type="button">Subir agenda</button>
+    </div>
+    <div id="msgSubida"></div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  // Misma URL y anon key pública que usa el kiosco (public/js/api.js).
+  var URL_BASE = "https://iergxsachwnhufnzwmbg.supabase.co";
+  var ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imllcmd4c2FjaHduaHVmbnp3bWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4NDIyNDcsImV4cCI6MjEwNTQxODI0N30.qK7tT44G7C_2XtkplYu2nGuARoZeFjEDcDhx7cOJqaw";
+  var $ = function (id) { return document.getElementById(id); };
+  var sesion = null, filas = [];
+
+  function msg(id, tipo, texto) { $(id).innerHTML = texto ? '<div class="msg ' + tipo + '"></div>' : ""; if (texto) $(id).firstChild.textContent = texto; }
+
+  // ---- sesión (Supabase Auth, sin librerías) ----
+  function guardar(s) {
+    sesion = s;
+    try { s ? sessionStorage.setItem("iris_sesion", JSON.stringify(s)) : sessionStorage.removeItem("iris_sesion"); } catch (e) {}
+    var dentro = !!s;
+    $("formLogin").classList.toggle("oculto", dentro);
+    $("sesion").classList.toggle("oculto", !dentro);
+    $("paso2").classList.toggle("oculto", !dentro);
+    $("quien").textContent = dentro ? s.email : "";
+  }
+  $("formLogin").addEventListener("submit", function (e) {
+    e.preventDefault();
+    msg("msgLogin", "info", "Entrando…");
+    fetch(URL_BASE + "/auth/v1/token?grant_type=password", {
+      method: "POST", headers: { "Content-Type": "application/json", apikey: ANON },
+      body: JSON.stringify({ email: $("correo").value.trim(), password: $("clave").value })
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (x) {
+        if (!x.ok) throw new Error("Correo o contraseña incorrectos.");
+        $("clave").value = ""; msg("msgLogin", "", "");
+        guardar({ token: x.j.access_token, email: x.j.user.email });
+      }).catch(function (err) { msg("msgLogin", "error", err.message); });
+  });
+  $("btnSalir").addEventListener("click", function () { guardar(null); $("vista").classList.add("oculto"); msg("msgSubida", "", ""); });
+  try { var g = sessionStorage.getItem("iris_sesion"); if (g) guardar(JSON.parse(g)); } catch (e) {}
+
+  // ---- lectura del Excel ----
+  function pad(n) { return String(n).padStart(2, "0"); }
+  // Devuelve {fecha:"YYYY-MM-DD", hora:"HH:MM"} o null.
+  function fechaHora(v) {
+    if (typeof v === "number") {
+      var p = XLSX.SSF.parse_date_code(v); if (!p) return null;
+      var min = p.M + (p.S >= 30 ? 1 : 0), h = p.H; if (min === 60) { min = 0; h++; }
+      return { fecha: p.y + "-" + pad(p.m) + "-" + pad(p.d), hora: pad(h) + ":" + pad(min) };
+    }
+    if (v instanceof Date && !isNaN(v)) return { fecha: v.getFullYear() + "-" + pad(v.getMonth() + 1) + "-" + pad(v.getDate()), hora: pad(v.getHours()) + ":" + pad(v.getMinutes()) };
+    if (typeof v === "string") {
+      var m = v.trim().match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})/);
+      if (m) return { fecha: m[1] + "-" + m[2] + "-" + m[3], hora: pad(m[4]) + ":" + m[5] };
+      m = v.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})/);
+      if (m) return { fecha: m[3] + "-" + pad(m[2]) + "-" + pad(m[1]), hora: pad(m[4]) + ":" + m[5] };
+    }
+    return null;
+  }
+  var COLUMNAS = { documento: "documento_paciente", fecha: "fecha_programada", tipo: "descripcion_lq", cups: "cargo_liq", cirujano: "cirujano_prog", sede: "sede" };
+
+  $("archivo").addEventListener("change", function () {
+    var f = $("archivo").files[0]; filas = [];
+    $("vista").classList.add("oculto"); msg("msgSubida", "", "");
+    if (!f) return;
+    var lector = new FileReader();
+    lector.onload = function () {
+      try {
+        var libro = XLSX.read(lector.result, { type: "array" });
+        var hoja = libro.Sheets[libro.SheetNames[0]];
+        var datos = XLSX.utils.sheet_to_json(hoja, { defval: null, raw: true });
+        if (!datos.length) throw new Error("El archivo está vacío.");
+        var cab = Object.keys(datos[0]).reduce(function (a, k) { a[k.trim().toLowerCase()] = k; return a; }, {});
+        var faltan = ["documento", "fecha", "tipo", "cirujano"].filter(function (k) { return !cab[COLUMNAS[k]]; }).map(function (k) { return COLUMNAS[k]; });
+        if (faltan.length) throw new Error("Faltan columnas en el Excel: " + faltan.join(", ") + ".");
+        var descartadas = 0;
+        datos.forEach(function (r) {
+          var fh = fechaHora(r[cab[COLUMNAS.fecha]]);
+          var doc = String(r[cab[COLUMNAS.documento]] == null ? "" : r[cab[COLUMNAS.documento]]).replace(/\D/g, "");
+          var tipo = r[cab[COLUMNAS.tipo]], cir = r[cab[COLUMNAS.cirujano]];
+          if (!fh || doc.length < 4 || !tipo || !cir) { descartadas++; return; }
+          var o = { documento: doc, fecha: fh.fecha, hora: fh.hora, tipo_cirugia: String(tipo), cirujano: String(cir),
+                    cups: cab[COLUMNAS.cups] && r[cab[COLUMNAS.cups]] != null ? String(r[cab[COLUMNAS.cups]]) : "" };
+          if (cab[COLUMNAS.sede] && r[cab[COLUMNAS.sede]]) o.sede = String(r[cab[COLUMNAS.sede]]);
+          filas.push(o);
+        });
+        if (!filas.length) throw new Error("No se encontró ninguna cirugía válida en el archivo.");
+        $("cuerpo").innerHTML = "";
+        filas.slice(0, 5).forEach(function (o) {
+          var tr = document.createElement("tr");
+          [o.documento.replace(/\d(?=\d{3})/g, "•"), o.fecha, o.hora, o.tipo_cirugia, o.cirujano].forEach(function (t) {
+            var td = document.createElement("td"); td.textContent = t; tr.appendChild(td);
+          });
+          $("cuerpo").appendChild(tr);
+        });
+        $("pie").textContent = filas.length + " cirugías listas para subir" + (descartadas ? " · " + descartadas + " filas sin datos completos se omiten." : ".") + " (muestra: primeras 5, cédula parcialmente oculta)";
+        $("vista").classList.remove("oculto"); msg("msgArchivo", "", "");
+      } catch (err) { msg("msgArchivo", "error", err.message); }
+    };
+    lector.readAsArrayBuffer(f);
+  });
+
+  // ---- subida ----
+  $("btnSubir").addEventListener("click", function () {
+    if (!sesion || !filas.length) return;
+    $("btnSubir").disabled = true; msg("msgSubida", "info", "Subiendo…");
+    fetch(URL_BASE + "/functions/v1/cargar-agenda", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: ANON, Authorization: "Bearer " + sesion.token },
+      body: JSON.stringify({ filas: filas })
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+      .then(function (x) {
+        if (x.status === 401) { guardar(null); throw new Error("La sesión venció. Inicie sesión de nuevo."); }
+        if (!x.ok) throw new Error(x.j.error || "No se pudo subir.");
+        msg("msgSubida", "ok", "Listo: " + x.j.guardadas + " cirugías guardadas" + (x.j.duplicadas ? ", " + x.j.duplicadas + " repetidas en el archivo" : "") + (x.j.descartadas ? ", " + x.j.descartadas + " omitidas" : "") + ". Se borraron " + x.j.borradasPorAntiguas + " registros con más de 7 días.");
+        $("vista").classList.add("oculto"); $("archivo").value = ""; filas = [];
+      }).catch(function (err) { msg("msgSubida", "error", err.message); })
+      .then(function () { $("btnSubir").disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

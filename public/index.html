@@ -29,7 +29,7 @@
 
   <!-- ============ PANTALLA 1: CÉDULA ============ -->
   <main class="pantalla activa" id="pantallaInicio">
-    <h1>Consulte su cita</h1>
+    <h1>Consulte su cirugía</h1>
     <p class="subtitulo">Diga o escriba el número de su cédula.</p>
 
     <button class="boton-voz" id="btnHablar" type="button">
@@ -62,23 +62,19 @@
 
   <!-- ============ PANTALLA: CARGANDO ============ -->
   <main class="pantalla" id="pantallaCargando">
-    <p class="cargando">Buscando su cita…</p>
+    <p class="cargando">Buscando su cirugía…</p>
   </main>
 
   <!-- ============ PANTALLA 2: RESULTADO ============ -->
   <main class="pantalla" id="pantallaCita" aria-live="assertive">
     <p class="saludo" id="saludo"></p>
-    <div class="estado" id="estado"></div>
     <div class="hora-bloque">
-      <p class="hora-etiqueta">Su cita es a las</p>
+      <p class="hora-etiqueta">Su cirugía es el</p>
+      <p class="hora-llegada" id="fechaCx"></p>
+      <p class="hora-etiqueta">a las</p>
       <p class="hora" id="hora"></p>
-      <p class="hora-llegada" id="horaLlegada"></p>
     </div>
     <div id="datos"></div>
-    <section class="recomendaciones" id="recomendaciones">
-      <h2>Antes de su cita</h2>
-      <ul id="listaRecomendaciones"></ul>
-    </section>
     <div class="acciones">
       <button class="boton-secundario" id="btnRepetir" type="button">🔊 Escuchar otra vez</button>
       <button class="boton-secundario" id="btnTerminar" type="button">Listo, gracias</button>
@@ -88,7 +84,7 @@
 
   <!-- ============ PANTALLA 3: NO ENCONTRADO ============ -->
   <main class="pantalla" id="pantallaNoEncontrado" aria-live="assertive">
-    <h1>No encontramos una cita con ese número</h1>
+    <h1>No encontramos una cirugía con ese número</h1>
     <div class="mensaje-grande">
       <p id="docNoEncontrado"></p>
       <p>Revise el número y vuelva a intentarlo, o acérquese al mostrador de admisiones.</p>

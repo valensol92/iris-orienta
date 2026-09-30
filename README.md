@@ -129,3 +129,21 @@ Con los datos de ejemplo de la migración, estas cédulas tienen cita hoy:
   encontró cita o no — con eso se puede armar el indicador de "consultas
   informativas que salieron de la fila de admisión" que se propuso en la
   presentación del proyecto.
+
+
+## Carga diaria de la agenda de cirugías
+
+1. Abra `https://valensol92.github.io/iris-orienta/admin.html`.
+2. Inicie sesión con un correo autorizado (tabla `personal_autorizado`).
+3. Elija el Excel del día y revise la vista previa (conteo y primeras 5 filas).
+4. Toque **Subir agenda**.
+
+El archivo se lee en el navegador; solo se envían 5 columnas: `documento_paciente`,
+`fecha_programada` (fecha y hora), `descripcion_lq` (tipo de cirugía), `cargo_liq` (código)
+y `cirujano_prog`. Nombre, fecha de nacimiento, plan y demás no se guardan.
+Si el Excel trae una columna `sede`, se usa; si no, aplica la sede por defecto de la tabla
+(`cirugias.sede`). Cada carga actualiza sin borrar (llave: cédula + fecha + hora + código) y
+elimina lo que lleve más de 7 días cargado (también hay un borrado diario con pg_cron).
+
+Migración: `supabase/migrations/0002_cirugias.sql`. Funciones: `consulta-cita` (kiosco) y
+`cargar-agenda` (carga; exige sesión y correo autorizado).
