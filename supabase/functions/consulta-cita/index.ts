@@ -98,10 +98,14 @@ Deno.serve(async (req) => {
 
   // Si la persona tiene varias citas registradas, se prioriza la de hoy más
   // próxima en el tiempo; si todas ya pasaron, se muestra la más reciente.
-  const hoy = new Date().toISOString().slice(0, 10);
+  // La columna `hora` es de tipo time y llega como "HH:MM:SS"; se normaliza a "HH:MM".
+  citas.forEach((c: any) => { c.hora = String(c.hora).slice(0, 5); });
+
+  // La clínica está en Colombia (UTC-5, sin horario de verano); el servidor corre en UTC.
+  const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
   const ahora = new Date();
   function minutosDesdeAhora(c: any): number {
-    const fechaHora = new Date((c.fecha || hoy) + "T" + c.hora + ":00");
+    const fechaHora = new Date((c.fecha || hoy) + "T" + c.hora + ":00-05:00");
     return Math.round((fechaHora.getTime() - ahora.getTime()) / 60000);
   }
   citas.sort((a: any, b: any) => Math.abs(minutosDesdeAhora(a)) - Math.abs(minutosDesdeAhora(b)));
