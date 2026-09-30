@@ -79,13 +79,13 @@ Deno.serve(async (req) => {
   const { data: citas, error } = await supabase
     .from("citas")
     .select("*")
-    .eq("doc", cedula);
+    .eq("documento", cedula);
 
   if (error) return json({ error: "error de base de datos" }, 500);
 
   // Registro de auditoría; si la tabla no existe todavía, no debe tumbar la respuesta.
   supabase.from("consultas_kiosco").insert({
-    doc: cedula, encontrada: !!(citas && citas.length), hora_consulta: new Date().toISOString(),
+    encontrada: !!(citas && citas.length),
   }).then(() => {}, () => {});
 
   if (!citas || citas.length === 0) {
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
 
   const datos = {
     nombre: cita.nombre,
-    doc: cita.doc,
+    doc: cita.documento,
     fecha: cita.fecha || hoy,
     hora: cita.hora,
     tipo: t.nombre,
